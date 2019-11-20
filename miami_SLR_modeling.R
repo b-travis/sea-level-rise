@@ -9,7 +9,7 @@ my_theme <- theme_bw()
 
 #### Create Initial Function -------------------------------------------
 N_YEARS <- 80
-N_HOUR_IN_YEAR <- 24 * 365 - 0.25*1
+N_HOUR_IN_YEAR <- 24 * 365 #- 0.25*1 for now, not considering leap years...
 t = (0:(N_HOUR_IN_YEAR * N_YEARS)) # [hours]
 
 # tide:
@@ -26,17 +26,32 @@ solar_tide = SOLAR_AVG_TIDE_MAGNITUDE * sin((2*pi/SOLAR_TIDAL_PERIOD) * t - 3) #
 # closest point of earth to sun
 # whatever contributes to the late summer/fall king tides in South Florida
 
-tide <- data.frame(t = t, tide = lunar_tide + solar_tide) %>%
+tide_df <- data.frame(t = t, tide = lunar_tide + solar_tide) %>%
   mutate(t_days = t/24)
 
 # Plot the simple tide
-ggplot(tide %>% filter(t_days < 32), aes(x = t_days, y = tide)) + 
+ggplot(tide_df %>% filter(t_days < 32), aes(x = t_days, y = tide)) + 
   geom_line() +
   my_theme
 
 
 
 # Add flood event forcing --------------------------------------------------
+
+# Add a single event at t = 100:105
+tide_plus <- tide_df %>%
+  mutate(forcing = case_when(t_days >= 12 & t_days <= 12.5 ~ 0.25,
+                          TRUE ~ 0)) %>%
+  mutate(sea_level = tide + forcing)
+
+# Plot the simple tide with 1 flood event
+ggplot(tide_plus %>% filter(t_days < 32), aes(x = t_days, y = sea_level)) + 
+  geom_line() +
+  my_theme
+
+
+
+
 set.seed(54) # set seed to 54 (random)
 # create the seeds for each period (year)
 seeds_by_year <- floor(runif(N_YEARS, min = 1, max = 101))
