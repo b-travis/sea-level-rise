@@ -16,11 +16,27 @@ t = (0:(N_HOUR_IN_YEAR * N_YEARS)) # [hours]
 M2 = sine_wave(t, 0.322, 12.4206, 256.0)
 S2 = sine_wave(t, 0.057, 12,      282.7)
 O1 = sine_wave(t, 0.028, 25.8193, 214.3)
-K1 = sine_wave(t, 0.033, 23,9345, 184.4)
+K1 = sine_wave(t, 0.033, 23.9345, 184.4)
 N2 = sine_wave(t, 0.071, 12.6583, 242.2)
 M4 = sine_wave(t, 0.003,  6.2103, 33.2)
 
-plot_tides(t, M2, 30)
+plot_tides_simple(t, M2, 10)
+
+# initial data frame:
+tide_df <- data.frame(t = t) %>%
+  mutate(t_days = t/24) %>%
+  mutate(
+    M2 = M2,
+    S2 = S2,
+    O1 = O1,
+    K1 = K1,
+    N2 = N2,
+    M4 = M4
+  ) %>%
+  mutate(tide = M2 + S2 + O1 + K1 + N2 + M4)
+
+
+plot_tides_simple2(tide_df, components = c('tide'), n_days_to_plot = 365)
 
 
 #### Set-up & load packages --------------------------------------------
