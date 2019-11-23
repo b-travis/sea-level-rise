@@ -1,4 +1,26 @@
-#### FLOODING, MIAMI FL ------------------------------------------------
+#### TIDES & FLOODING, MIAMI FL ------------------------------------------------
+
+N_YEARS <- 80
+N_HOUR_IN_YEAR <- 24 * 365 #- 0.25*1 for now, not considering leap years...
+t = (0:(N_HOUR_IN_YEAR * N_YEARS)) # [hours]
+
+# Harmonic Constituents of Tide come from https://tidesandcurrents.noaa.gov/harcon.html?unit=0&timezone=1&id=8723165&name=MIAMI%2C+BISCAYNE+BAY&state=FL
+#  for Biscayne Bay, Miami, FL
+
+# M2:
+# S2: 
+# N2: larger lunar eliptic semidiurnal constituent
+# K1, O1 are effect of moon's declination
+
+# X = sine_wave(t_vec, amplitude, period, phase_degrees)
+M2 = sine_wave(t, 0.322, 12.4206, 256.0)
+S2 = sine_wave(t, 0.057, 12,      282.7)
+O1 = sine_wave(t, 0.028, 25.8193, 214.3)
+K1 = sine_wave(t, 0.033, 23,9345, 184.4)
+N2 = sine_wave(t, 0.071, 12.6583, 242.2)
+M4 = sine_wave(t, 0.003,  6.2103, 33.2)
+
+plot_tides(t, M2, 30)
 
 
 #### Set-up & load packages --------------------------------------------
@@ -7,19 +29,28 @@ library(tidyverse)
 # Create a theme for plotting
 my_theme <- theme_bw()
 
-#### Create Initial Function -------------------------------------------
-N_YEARS <- 80
-N_HOUR_IN_YEAR <- 24 * 365 #- 0.25*1 for now, not considering leap years...
-t = (0:(N_HOUR_IN_YEAR * N_YEARS)) # [hours]
+#### Create Equilibrium Amplitude Fucntion -------------------------------------------
+# Only considers Principal Tidal Constituents (Sun and Moon)
+
 
 # tide:
-LUNAR_TIDAL_PERIOD <- 12.42 # [hours] source: wikipedia
-LUNAR_AVG_TIDE_MAGNITUDE <- 0.33 # [m]
-lunar_tide = LUNAR_AVG_TIDE_MAGNITUDE * sin((2*pi/LUNAR_TIDAL_PERIOD) * t)
+LUNAR_TIDAL_PERIOD <- 12.4206 # [hours] source: wikipedia, 262B notes 2/28/18 p.3
+LUNAR_AVG_TIDE_MAGNITUDE <- 0.243 # [m]
+# M2 = lunar semidiurnal
+M2 <- LUNAR_AVG_TIDE_MAGNITUDE * sin((2*pi/LUNAR_TIDAL_PERIOD) * t)
 
 SOLAR_TIDAL_PERIOD <- 12 # [hours]
 SOLAR_AVG_TIDE_MAGNITUDE <- 0.46 * LUNAR_AVG_TIDE_MAGNITUDE # [m] source: https://oceanservice.noaa.gov/education/tutorial_tides/media/supp_tide02.html
-solar_tide = SOLAR_AVG_TIDE_MAGNITUDE * sin((2*pi/SOLAR_TIDAL_PERIOD) * t - 3) # staggered from the lunar tide
+# S2 = solar semidiurnal
+S2 <- SOLAR_AVG_TIDE_MAGNITUDE * sin((2*pi/SOLAR_TIDAL_PERIOD) * t - 3) # staggered from the lunar tide
+
+# lunisolar:
+K1 <- 0.141565 * sin((2*pi/23.9344)) # 262B
+# principal lunar:
+O1 <- 0.100514 * sin((2*pi/25.8194)) 
+# Also see: https://www.sciencedirect.com/topics/earth-and-planetary-sciences/tidal-constituent
+
+
 
 # Other possible adds:
 # perigee = closest point of moon to earth
@@ -49,6 +80,8 @@ ggplot(tide_plus %>% filter(t_days < 32), aes(x = t_days, y = sea_level)) +
   geom_line() +
   my_theme
 
+
+# Randomized Events ------------------------------------------------------
 
 
 
