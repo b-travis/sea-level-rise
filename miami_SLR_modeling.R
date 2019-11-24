@@ -32,28 +32,38 @@ plot_tides_simple2(tide_df, components = c('M2','S2','O1','K1','N2','M4'), n_day
 plot_tides_simple2(tide_df, components = c('tide'), n_days = 365)
 
 
-#### Create Equilibrium Amplitude Fucntion -------------------------------------------
-# Only considers Principal Tidal Constituents (Sun and Moon)
-
-# lunisolar:
-K1 <- 0.141565 * sin((2*pi/23.9344)) # 262B
-# principal lunar:
-O1 <- 0.100514 * sin((2*pi/25.8194)) 
-
+# #### Create Equilibrium Amplitude Fucntion 
+# 
+# # Other possible adds:
+# # perigee = closest point of moon to earth
+# # closest point of earth to sun
+# # whatever contributes to the late summer/fall king tides in South Florida
 
 
-# Other possible adds:
-# perigee = closest point of moon to earth
-# closest point of earth to sun
-# whatever contributes to the late summer/fall king tides in South Florida
+# KING TIDES: -----------------------------------------------
+# Identify the top ('king') tides, filtered by assuming 3-4 king tides per year
+N_DAYS = 365*N_YEARS
+top_tides <- tide_df %>% select(c(t_days, tide)) %>%
+  filter(t_days < N_DAYS) %>%
+  top_n(n = N_YEARS * 3.5, wt = tide)
 
-tide_df <- data.frame(t = t, tide = lunar_tide + solar_tide) %>%
-  mutate(t_days = t/24)
+# We can identify a height exceeded only by the top tides:
+king_tide_threshold <- min(top_tides$tide)
 
-# Plot the simple tide
-ggplot(tide_df %>% filter(t_days < 32), aes(x = t_days, y = tide)) + 
-  geom_line() +
-  my_theme
+plot_tides_simple2(tide_df, components = c('tide'), n_days = 365) +
+  geom_hline(yintercept = king_tide_threshold, color = 'black', linetype = 'dashed')
+
+# Where are these points over the first 3 years?
+
+plot_tides_simple2(tide_df, components = c('tide'), n_days = 365*3) +
+  geom_point(data = filter(top_tides, t_days < 365*3), aes(x = t_days, y = tide), color = 'black', shape = 1)
+
+
+# We've gotten a king tide threshold defined by 3.5 (3-4) "King Tides" per year
+
+# SLR Impact on "King Tide" Frequency --------------------------------------
+# estimate for SLR?
+
 
 
 
