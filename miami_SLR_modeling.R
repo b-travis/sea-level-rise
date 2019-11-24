@@ -22,8 +22,8 @@ tide_df <- data.frame(t = t) %>%
   mutate(t_years = t_days/365) %>%
   mutate(date_year = t_years + 2020) %>%
   mutate(
-    M2 = sine_wave(t, 0.322, 12.4206, 256.0),
-    S2 = sine_wave(t, 0.057, 12,      282.7),
+    M2 = sine_wave(t, 0.322, 12.4206, 256.0), # main lunar semidiurnal
+    S2 = sine_wave(t, 0.057, 12,      282.7), # solar semidiurnal
     O1 = sine_wave(t, 0.028, 25.8193, 214.3),
     K1 = sine_wave(t, 0.033, 23.9345, 184.4),
     N2 = sine_wave(t, 0.071, 12.6583, 242.2),
@@ -38,11 +38,12 @@ tide_df <- data.frame(t = t) %>%
   ) %>%
   mutate(tide = M2 + S2 + O1 + K1 + N2 + M4 +M6+NU2+SSA+SA+L2+K2+P1)
 
-plot_tides_simple2(tide_df, 
-                   components = c('M2','S2','O1','K1','N2','M4','M6','NU2','SSA','SA','L2','K2','P1'), 
-                   n_days = 25)
-plot_tides_simple2(tide_df, components = c('tide'), n_days = 365*5)
-
+p1 <- plot_tides_simple2(tide_df, 
+                   components = c('M2','S2','K1','N2','SSA','SA'), 
+                   n_days = 30)
+save_plot(p1,'tide_constituents_30days.png')
+p2 <- plot_tides_simple2(tide_df, components = c('tide'), n_days = 7)
+save_plot(p2,'tide_7day.png')
 
 # #### Create Equilibrium Amplitude Fucntion 
 # 
@@ -76,12 +77,13 @@ plot_tides_simple2(tide_df, components = c('tide'), n_days = 365*5) +
 
 # Where are these points over the first 5 years?
 
-plot_tides_simple2(tide_df, components = c('tide'), n_days = 365*5) +
+p_kings <- plot_tides_simple2(tide_df, components = c('tide'), n_days = 365*5) +
+  geom_hline(yintercept = king_tide_threshold, color = 'black', linetype = 'dashed') +
   geom_point(data = filter(top_tides, t_days < 365*5), aes(x = date_year, y = tide), color = 'black', shape = 1)
-
+save_plot(p_kings,'kings_5year.png')
 
 # Histogram of count of king tide occurences
-tide_df %>%
+king_hist <- tide_df %>%
   select(c(t_days, t_years, date_year, tide)) %>%
   mutate(t_days = ceiling(t_days),
          t_years = ceiling(t_years),
@@ -94,8 +96,10 @@ tide_df %>%
   summarise(num_king_tides = n()) %>%
   ggplot() +
   geom_bar(aes(x = date_year, y = num_king_tides), stat = 'identity') +
-  my_theme
-
+  my_theme +
+  ylab('Days Exceeding Flooding Threshold') +
+  xlab('Year')
+save_plot(king_hist, 'king_hist.png', size = c(6,6))
 
 # We've gotten a king tide threshold defined by 3.5 (3-4) "King Tides" per year
 
@@ -107,16 +111,17 @@ SLR_RATE <- 0.00239 # [m/yr] source: NOAA https://tidesandcurrents.noaa.gov/sltr
 tide_df$MSL <- tide_df$t_years * SLR_RATE
 tide_df$tide_plus_SLR <- tide_df$MSL + tide_df$tide
 
-plot_tides_simple2(tide_df, components = c('MSL'), n_days = N_DAYS)
-plot_tides_simple2(tide_df, components = c('tide_plus_SLR'), n_days = 365*25) +
+plot_tides_simple2(tide_df %>% filter(date_year < 2021 | date_year > 2059), components = c('MSL'), n_days = N_DAYS)
+tide_wSLR <- plot_tides_simple2(tide_df, components = c('tide_plus_SLR'), n_days = 365*25) +
   geom_hline(yintercept = king_tide_threshold, color = 'black', linetype = 'dashed') +
   geom_abline(slope = SLR_RATE, 
               intercept = -SLR_RATE*min(tide_df$date_year), 
               color = 'black')
-
+# save_plot(tide_wSLR,'tide_wSLR_curr_5year.png')
+save_plot(tide_wSLR,'tide_wSLR_12in30_5year.png')
 
 # New histogram -- includes SLR
-temp_hist <- tide_df %>%
+SLR_hist <- tide_df %>%
   mutate(tide = tide_plus_SLR) %>%
   select(c(t_days, t_years, date_year, tide)) %>%
   mutate(t_days = ceiling(t_days),
@@ -131,7 +136,7 @@ temp_hist <- tide_df %>%
   ggplot() +
   geom_bar(aes(x = date_year, y = num_king_tides), stat = 'identity') +
   my_theme
-
+save_plot(SLR_hist, 'hist_SLR_12in30.png', size = c(6,6))
 
 # Another set of rates:
 # https://southeastfloridaclimatecompact.org/wp-content/uploads/2015/10/2015-Compact-Unified-Sea-Level-Rise-Projection.pdf
@@ -139,8 +144,64 @@ SLR_RATE <- 0.01016 # [m/yr] --> equivalent to 12 inches in 30 years (or 10in/25
 SLR_RATE <- 0.02032 # [m/yr] --> equivalent to 24 inches in 30 years
 
 
+# Histogram with specific SLR (6, 12, 18 inches)
+m_per_in <- 0.0254
 
+SLR_hist <- tide_df %>%
+  mutate(tide = tide + 9*m_per_in) %>%
+  select(c(t_days, t_years, date_year, tide)) %>%
+  mutate(t_days = ceiling(t_days),
+         t_years = ceiling(t_years),
+         date_year = floor(date_year)) %>%
+  group_by(t_days,t_years, date_year) %>%
+  summarize(daily_max = max(tide)) %>%
+  ungroup() %>%
+  filter(daily_max >= king_tide_threshold) %>%
+  group_by(date_year) %>%
+  summarise(num_king_tides = n()) %>%
+  ggplot() +
+  geom_bar(aes(x = date_year, y = num_king_tides), stat = 'identity') +
+  geom_hline(aes(yintercept = mean(num_king_tides))) +
+  my_theme
+save_plot(SLR_hist, 'hist_SLR_12in30.png', size = c(6,6))
 
+# Days with High Tide Flooding, based on SLR scenarios:
+SLR_scenarios_line <- tide_df %>%
+  mutate(inch_0 = tide,
+         inch_1 = tide + 1 * m_per_in,
+         inch_2 = tide + 2 * m_per_in,
+         inch_4 = tide + 4 * m_per_in,
+         inch_6 = tide + 6 * m_per_in,
+         inch_8 = tide + 8 * m_per_in,
+         inch_10 = tide + 10 * m_per_in,
+         inch_12 = tide + 12 * m_per_in,
+         inch_14 = tide + 14 * m_per_in,
+         inch_16 = tide + 16 * m_per_in,
+         inch_18 = tide + 18 * m_per_in,
+         inch_20 = tide + 20 * m_per_in) %>%
+  pivot_longer(cols = starts_with('inch_'), names_to = 'SLR_scenario', values_to = 'sea_level') %>%
+  mutate(SLR_scenario = gsub('inch_','',SLR_scenario)) %>%
+  mutate(SLR_scenario = as.numeric(SLR_scenario)) %>%
+  select(c(t_days, t_years, date_year, SLR_scenario, sea_level)) %>%
+  mutate(t_days = ceiling(t_days),
+         t_years = ceiling(t_years),
+         date_year = floor(date_year)) %>%
+  group_by(t_days,t_years, date_year, SLR_scenario) %>%
+  summarize(daily_max = max(sea_level)) %>%
+  ungroup() %>%
+  filter(daily_max >= king_tide_threshold) %>%
+  group_by(date_year, SLR_scenario) %>%
+  summarise(num_king_tides = n()) %>%
+  ungroup() %>%
+  group_by(SLR_scenario) %>%
+  summarise(mean_n_king_tide_days = mean(num_king_tides)) %>%
+  ggplot() +
+  # geom_bar(aes(x = SLR_scenario, y = mean_n_king_tide_days), stat = 'identity') +
+  geom_line(aes(x = SLR_scenario, y = mean_n_king_tide_days)) +
+  # facet_grid(cols = vars(SLR_scenario)) +
+  # geom_hline(aes(yintercept = mean(num_king_tides))) +
+  my_theme
+save_plot(SLR_scenarios_line, 'SLR_scenarios_line.png', size = c(6,6))
 
 
 
@@ -151,7 +212,7 @@ SLR_RATE <- 0.02032 # [m/yr] --> equivalent to 24 inches in 30 years
 # Add a single event at t = 100:105
 tide_plus <- tide_df %>%
   mutate(forcing = case_when(t_days >= 12 & t_days <= 12.5 ~ 0.25,
-                          TRUE ~ 0)) %>%
+                             TRUE ~ 0)) %>%
   mutate(sea_level = tide + forcing)
 
 # Plot the simple tide with 1 flood event

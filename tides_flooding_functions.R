@@ -1,4 +1,6 @@
 library(tidyverse)
+save_dir <- '/Users/barrett/R Data/'
+setwd(save_dir)
 
 # TIDES FUNCTIONS -----------
 sine_wave <- function(t_vec, amplitude, period, phase_degrees) {
@@ -32,4 +34,13 @@ plot_tides_simple2 <- function(tide_df, components = c('M2','S2','O1','K1','N2',
     theme(legend.position = 'none') +
     facet_grid(rows = vars(comp))
   temp_p
+}
+
+save_plot <- function(plot_obj, filename, size = c(10,6)) {
+  ggsave(filename, 
+         plot = plot_obj,
+         device = 'png', 
+         path = save_dir, 
+         width = size[1],
+         height = size[2])
 }
