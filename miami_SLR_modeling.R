@@ -2,7 +2,8 @@
 
 N_YEARS <- 40
 N_HOUR_IN_YEAR <- 24 * 365 #- 0.25*1 for now, not considering leap years...
-t = (0:(N_HOUR_IN_YEAR * N_YEARS)) # [hours]
+# t = (0:(N_HOUR_IN_YEAR * N_YEARS)) # [hours]
+t = seq(from = 0, to = N_HOUR_IN_YEAR * N_YEARS, by = 0.2) # [hours]
 
 # Harmonic Constituents of Tide come from https://tidesandcurrents.noaa.gov/harcon.html?unit=0&timezone=1&id=8723165&name=MIAMI%2C+BISCAYNE+BAY&state=FL
 #  for Biscayne Bay, Miami, FL
@@ -26,11 +27,20 @@ tide_df <- data.frame(t = t) %>%
     O1 = sine_wave(t, 0.028, 25.8193, 214.3),
     K1 = sine_wave(t, 0.033, 23.9345, 184.4),
     N2 = sine_wave(t, 0.071, 12.6583, 242.2),
-    M4 = sine_wave(t, 0.003,  6.2103, 33.2)
+    M4 = sine_wave(t, 0.003,  6.2103, 33.2),
+    M6 = sine_wave(t, 0.011,  4.1401, 94.1),
+    NU2 =sine_wave(t, 0.014, 12.6260, 229.0),
+    SSA =sine_wave(t, 0.055, 4382.905,57.8),   # solar semiannual,
+    SA = sine_wave(t, 0.083, 8765.8211,190.3), # solar annual
+    L2 = sine_wave(t, 0.015, 12.1916, 232.1),
+    K2 = sine_wave(t, 0.016, 11.9672, 279.4),
+    P1 = sine_wave(t, 0.01, 24.0659, 182.6)
   ) %>%
-  mutate(tide = M2 + S2 + O1 + K1 + N2 + M4)
+  mutate(tide = M2 + S2 + O1 + K1 + N2 + M4 +M6+NU2+SSA+SA+L2+K2+P1)
 
-plot_tides_simple2(tide_df, components = c('M2','S2','O1','K1','N2','M4'), n_days = 5)
+plot_tides_simple2(tide_df, 
+                   components = c('M2','S2','O1','K1','N2','M4','M6','NU2','SSA','SA','L2','K2','P1'), 
+                   n_days = 25)
 plot_tides_simple2(tide_df, components = c('tide'), n_days = 365)
 
 
@@ -45,20 +55,23 @@ plot_tides_simple2(tide_df, components = c('tide'), n_days = 365)
 # KING TIDES: -----------------------------------------------
 # Identify the top ('king') tides, filtered by assuming 3-4 king tides per year
 N_DAYS = 365*N_YEARS
-top_tides <- tide_df %>% select(c(t_days, tide)) %>%
+top_tides <- tide_df %>% select(c(t, t_days, t_years, date_year, tide)) %>%
   filter(t_days < N_DAYS) %>%
-  top_n(n = N_YEARS * 3.5, wt = tide)
+  top_n(n = N_YEARS * 4, wt = tide)
+
+
 
 # We can identify a height exceeded only by the top tides:
-king_tide_threshold <- min(top_tides$tide)
+# king_tide_threshold <- min(top_tides$tide)
+king_tide_threshold <- 
 
 plot_tides_simple2(tide_df, components = c('tide'), n_days = 365) +
   geom_hline(yintercept = king_tide_threshold, color = 'black', linetype = 'dashed')
 
 # Where are these points over the first 3 years?
 
-plot_tides_simple2(tide_df, components = c('tide'), n_days = 365*3) +
-  geom_point(data = filter(top_tides, t_days < 365*3), aes(x = t_days, y = tide), color = 'black', shape = 1)
+plot_tides_simple2(tide_df, components = c('tide'), n_days = 365*10) +
+  geom_point(data = filter(top_tides, t_days < 365*10), aes(x = date_year, y = tide), color = 'black', shape = 1)
 
 
 # We've gotten a king tide threshold defined by 3.5 (3-4) "King Tides" per year
@@ -75,7 +88,10 @@ plot_tides_simple2(tide_df, components = c('MSL'), n_days = N_DAYS)
 plot_tides_simple2(tide_df, components = c('tide_plus_SLR'), n_days = 365*25) +
   geom_hline(yintercept = king_tide_threshold, color = 'black', linetype = 'dashed')
 
-
+# Another set of rates:
+# https://southeastfloridaclimatecompact.org/wp-content/uploads/2015/10/2015-Compact-Unified-Sea-Level-Rise-Projection.pdf
+SLR_RATE <- 0.01016 # [m/yr] --> equivalent to 12 inches in 30 years
+SLR_RATE <- 0.02032 # [m/yr] --> equivalent to 24 inches in 30 years
 
 # Add flood event forcing --------------------------------------------------
 
