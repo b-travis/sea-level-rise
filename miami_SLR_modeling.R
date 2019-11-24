@@ -1,6 +1,6 @@
 #### TIDES & FLOODING, MIAMI FL ------------------------------------------------
 
-N_YEARS <- 80
+N_YEARS <- 40
 N_HOUR_IN_YEAR <- 24 * 365 #- 0.25*1 for now, not considering leap years...
 t = (0:(N_HOUR_IN_YEAR * N_YEARS)) # [hours]
 
@@ -18,6 +18,8 @@ t = (0:(N_HOUR_IN_YEAR * N_YEARS)) # [hours]
 # initial data frame:
 tide_df <- data.frame(t = t) %>%
   mutate(t_days = t/24) %>%
+  mutate(t_years = t_days/365) %>%
+  mutate(date_year = t_years + 2020) %>%
   mutate(
     M2 = sine_wave(t, 0.322, 12.4206, 256.0),
     S2 = sine_wave(t, 0.057, 12,      282.7),
@@ -63,7 +65,15 @@ plot_tides_simple2(tide_df, components = c('tide'), n_days = 365*3) +
 
 # SLR Impact on "King Tide" Frequency --------------------------------------
 # estimate for SLR?
+# Sea Level Rise
+# current rate:
+SLR_RATE <- 0.00239 # [m/yr] source: NOAA https://tidesandcurrents.noaa.gov/sltrends/sltrends_station.shtml?id=8723170
+tide_df$MSL <- tide_df$t_years * SLR_RATE
+tide_df$tide_plus_SLR <- tide_df$MSL + tide_df$tide
 
+plot_tides_simple2(tide_df, components = c('MSL'), n_days = N_DAYS)
+plot_tides_simple2(tide_df, components = c('tide_plus_SLR'), n_days = 365*25) +
+  geom_hline(yintercept = king_tide_threshold, color = 'black', linetype = 'dashed')
 
 
 
@@ -100,5 +110,3 @@ for (i in 1:N_YEARS) {
 }
 
 
-# Sea Level Rise
-SLR_RATE <- 2.39 * 10e-3 # [m/yr] source: NOAA https://tidesandcurrents.noaa.gov/sltrends/sltrends_station.shtml?id=8723170
