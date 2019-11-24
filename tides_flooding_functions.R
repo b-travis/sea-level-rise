@@ -8,7 +8,7 @@ sine_wave <- function(t_vec, amplitude, period, phase_degrees) {
 
 my_theme <- theme_bw()
 
-plot_tides <- function(t_vec, components_list, n_days_to_plot, superimpose = TRUE) {
+plot_tides <- function(t_vec, components_list, n_days, superimpose = TRUE) {
   
   # initial data frame:
   tide_df <- data.frame(t = t_vec) %>%
@@ -37,7 +37,7 @@ plot_tides <- function(t_vec, components_list, n_days_to_plot, superimpose = TRU
   
     
 }
-plot_tides_simple <- function(t_vec, tide_height, n_days_to_plot) {
+plot_tides_simple <- function(t_vec, tide_height, n_days) {
   tide_df <- data.frame(t = t_vec, tide = tide_height) %>%
     mutate(t_days = t/24)
   
@@ -47,13 +47,14 @@ plot_tides_simple <- function(t_vec, tide_height, n_days_to_plot) {
     my_theme
 }
 
-plot_tides_simple2 <- function(tide_df, components = c('M2','S2','O1','K1','N2','M4'), n_days_to_plot = 30, superimpose = TRUE) {
+plot_tides_simple2 <- function(tide_df, components = c('M2','S2','O1','K1','N2','M4'), n_days = 30, superimpose = TRUE) {
   temp <- tide_df %>%
     select(c(t_days, components)) %>%
-    filter(t_days < n_days_to_plot) %>%
+    filter(t_days < n_days) %>%
     pivot_longer(cols = components, names_to = 'comp', values_to = 'magnitude') #%>%
   
   temp %>% ggplot(aes(x = t_days, y = magnitude)) + 
     geom_line(aes(color = comp)) +
-    my_theme
+    my_theme +
+    facet_grid(rows = vars(comp))
 }
