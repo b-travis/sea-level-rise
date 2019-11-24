@@ -55,23 +55,27 @@ plot_tides_simple2(tide_df, components = c('tide'), n_days = 365)
 # KING TIDES: -----------------------------------------------
 # Identify the top ('king') tides, filtered by assuming 3-4 king tides per year
 N_DAYS = 365*N_YEARS
-top_tides <- tide_df %>% select(c(t, t_days, t_years, date_year, tide)) %>%
-  filter(t_days < N_DAYS) %>%
-  top_n(n = N_YEARS * 4, wt = tide)
 
+ident_top_tides <- tide_df %>%
+  select(c(t_days, tide)) %>%
+  mutate(t_days = floor(t_days)) %>%
+  group_by(t_days) %>%
+  summarize(daily_max = max(tide)) %>%
+  top_n(n = N_YEARS * 3.5, wt = daily_max)
 
+king_tide_threshold <- min(ident_top_tides$daily_max)
 
-# We can identify a height exceeded only by the top tides:
-# king_tide_threshold <- min(top_tides$tide)
-king_tide_threshold <- 
+top_tides <- tide_df %>% select(c(t_days, t_years, date_year, tide)) %>%
+  filter(t_days < N_DAYS,
+         tide >= king_tide_threshold)
 
-plot_tides_simple2(tide_df, components = c('tide'), n_days = 365) +
+plot_tides_simple2(tide_df, components = c('tide'), n_days = 365*5) +
   geom_hline(yintercept = king_tide_threshold, color = 'black', linetype = 'dashed')
 
-# Where are these points over the first 3 years?
+# Where are these points over the first 5 years?
 
-plot_tides_simple2(tide_df, components = c('tide'), n_days = 365*10) +
-  geom_point(data = filter(top_tides, t_days < 365*10), aes(x = date_year, y = tide), color = 'black', shape = 1)
+plot_tides_simple2(tide_df, components = c('tide'), n_days = 365*5) +
+  geom_point(data = filter(top_tides, t_days < 365*5), aes(x = date_year, y = tide), color = 'black', shape = 1)
 
 
 # We've gotten a king tide threshold defined by 3.5 (3-4) "King Tides" per year
