@@ -116,7 +116,7 @@ plot_tides_simple2(tide_df, components = c('tide_plus_SLR'), n_days = 365*25) +
 
 
 # New histogram -- includes SLR
-tide_df %>%
+temp_hist <- tide_df %>%
   mutate(tide = tide_plus_SLR) %>%
   select(c(t_days, t_years, date_year, tide)) %>%
   mutate(t_days = ceiling(t_days),
@@ -135,8 +135,16 @@ tide_df %>%
 
 # Another set of rates:
 # https://southeastfloridaclimatecompact.org/wp-content/uploads/2015/10/2015-Compact-Unified-Sea-Level-Rise-Projection.pdf
-SLR_RATE <- 0.01016 # [m/yr] --> equivalent to 12 inches in 30 years
+SLR_RATE <- 0.01016 # [m/yr] --> equivalent to 12 inches in 30 years (or 10in/25yr)
 SLR_RATE <- 0.02032 # [m/yr] --> equivalent to 24 inches in 30 years
+
+
+
+
+
+
+
+
 
 # Add flood event forcing --------------------------------------------------
 
