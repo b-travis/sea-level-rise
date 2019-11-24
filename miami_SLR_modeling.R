@@ -57,11 +57,13 @@ plot_tides_simple2(tide_df, components = c('tide'), n_days = 365*5)
 N_DAYS = 365*N_YEARS
 
 ident_top_tides <- tide_df %>%
-  select(c(t_days, tide)) %>%
-  mutate(t_days = ceiling(t_days)) %>%
-  group_by(t_days) %>%
+  select(c(t_days, t_years, tide)) %>%
+  mutate(t_days = ceiling(t_days),
+         t_years = ceiling(t_years)) %>%
+  group_by(t_days,t_years) %>%
   summarize(daily_max = max(tide)) %>%
-  top_n(5*N_YEARS, wt = daily_max)
+  ungroup() %>%
+  top_n(n = 5*N_YEARS, wt = daily_max)
 
 king_tide_threshold <- min(ident_top_tides$daily_max)
 
@@ -80,9 +82,14 @@ plot_tides_simple2(tide_df, components = c('tide'), n_days = 365*5) +
 
 # Histogram of count of king tide occurences
 tide_df %>%
-  select(date_year, tide) %>%
-  filter(tide >= king_tide_threshold) %>%
-  mutate(date_year = ceiling(date_year)) %>%
+  select(c(t_days, t_years, date_year, tide)) %>%
+  mutate(t_days = ceiling(t_days),
+         t_years = ceiling(t_years),
+         date_year = floor(date_year)) %>%
+  group_by(t_days,t_years, date_year) %>%
+  summarize(daily_max = max(tide)) %>%
+  ungroup() %>%
+  filter(daily_max >= king_tide_threshold) %>%
   group_by(date_year) %>%
   summarise(num_king_tides = n()) %>%
   ggplot() +
@@ -110,9 +117,15 @@ plot_tides_simple2(tide_df, components = c('tide_plus_SLR'), n_days = 365*25) +
 
 # New histogram -- includes SLR
 tide_df %>%
-  select(date_year, tide_plus_SLR) %>%
-  filter(tide_plus_SLR >= king_tide_threshold) %>%
-  mutate(date_year = ceiling(date_year)) %>%
+  mutate(tide = tide_plus_SLR) %>%
+  select(c(t_days, t_years, date_year, tide)) %>%
+  mutate(t_days = ceiling(t_days),
+         t_years = ceiling(t_years),
+         date_year = floor(date_year)) %>%
+  group_by(t_days,t_years, date_year) %>%
+  summarize(daily_max = max(tide)) %>%
+  ungroup() %>%
+  filter(daily_max >= king_tide_threshold) %>%
   group_by(date_year) %>%
   summarise(num_king_tides = n()) %>%
   ggplot() +
