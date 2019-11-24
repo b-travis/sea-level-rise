@@ -41,7 +41,7 @@ tide_df <- data.frame(t = t) %>%
 plot_tides_simple2(tide_df, 
                    components = c('M2','S2','O1','K1','N2','M4','M6','NU2','SSA','SA','L2','K2','P1'), 
                    n_days = 25)
-plot_tides_simple2(tide_df, components = c('tide'), n_days = 365)
+plot_tides_simple2(tide_df, components = c('tide'), n_days = 365*5)
 
 
 # #### Create Equilibrium Amplitude Fucntion 
@@ -58,10 +58,10 @@ N_DAYS = 365*N_YEARS
 
 ident_top_tides <- tide_df %>%
   select(c(t_days, tide)) %>%
-  mutate(t_days = floor(t_days)) %>%
+  mutate(t_days = ceiling(t_days)) %>%
   group_by(t_days) %>%
   summarize(daily_max = max(tide)) %>%
-  top_n(n = N_YEARS * 3.5, wt = daily_max)
+  top_n(5*N_YEARS, wt = daily_max)
 
 king_tide_threshold <- min(ident_top_tides$daily_max)
 
@@ -78,6 +78,18 @@ plot_tides_simple2(tide_df, components = c('tide'), n_days = 365*5) +
   geom_point(data = filter(top_tides, t_days < 365*5), aes(x = date_year, y = tide), color = 'black', shape = 1)
 
 
+# Histogram of count of king tide occurences
+tide_df %>%
+  select(date_year, tide) %>%
+  filter(tide >= king_tide_threshold) %>%
+  mutate(date_year = ceiling(date_year)) %>%
+  group_by(date_year) %>%
+  summarise(num_king_tides = n()) %>%
+  ggplot() +
+  geom_bar(aes(x = date_year, y = num_king_tides), stat = 'identity') +
+  my_theme
+
+
 # We've gotten a king tide threshold defined by 3.5 (3-4) "King Tides" per year
 
 # SLR Impact on "King Tide" Frequency --------------------------------------
@@ -90,7 +102,23 @@ tide_df$tide_plus_SLR <- tide_df$MSL + tide_df$tide
 
 plot_tides_simple2(tide_df, components = c('MSL'), n_days = N_DAYS)
 plot_tides_simple2(tide_df, components = c('tide_plus_SLR'), n_days = 365*25) +
-  geom_hline(yintercept = king_tide_threshold, color = 'black', linetype = 'dashed')
+  geom_hline(yintercept = king_tide_threshold, color = 'black', linetype = 'dashed') +
+  geom_abline(slope = SLR_RATE, 
+              intercept = -SLR_RATE*min(tide_df$date_year), 
+              color = 'black')
+
+
+# New histogram -- includes SLR
+tide_df %>%
+  select(date_year, tide_plus_SLR) %>%
+  filter(tide_plus_SLR >= king_tide_threshold) %>%
+  mutate(date_year = ceiling(date_year)) %>%
+  group_by(date_year) %>%
+  summarise(num_king_tides = n()) %>%
+  ggplot() +
+  geom_bar(aes(x = date_year, y = num_king_tides), stat = 'identity') +
+  my_theme
+
 
 # Another set of rates:
 # https://southeastfloridaclimatecompact.org/wp-content/uploads/2015/10/2015-Compact-Unified-Sea-Level-Rise-Projection.pdf
