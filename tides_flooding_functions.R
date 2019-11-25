@@ -8,7 +8,9 @@ sine_wave <- function(t_vec, amplitude, period, phase_degrees) {
   wave <- amplitude * sin(2 * pi * t_vec / period - phase_radians)
 }
 
-my_theme <- theme_bw()
+my_theme <- theme_bw() +
+  theme(text = element_text(size = 16),
+        axis.text = element_text(size = 13))
 
 plot_tides_simple2 <- function(tide_df, components = c('M2','S2','O1','K1','N2','M4'), n_days = 30, superimpose = TRUE) {
 
@@ -24,19 +26,28 @@ plot_tides_simple2 <- function(tide_df, components = c('M2','S2','O1','K1','N2',
   }
   
   if(USE_YEAR == TRUE) {
-    temp_p <- temp %>% ggplot(aes(x = date_year, y = magnitude))
+    temp_p <- temp %>% ggplot(aes(x = date_year, y = magnitude)) +
+      xlab('Year')
   } else {
-    temp_p <- temp %>% ggplot(aes(x = t_days, y = magnitude))
+    temp_p <- temp %>% ggplot(aes(x = t_days, y = magnitude)) +
+      xlab('Days')
   }
   temp_p <- temp_p + 
     geom_line(aes(color = comp)) +
     my_theme +
-    theme(legend.position = 'none') +
-    facet_grid(rows = vars(comp))
+    theme(legend.position = 'none',
+          strip.background = element_rect(fill = 'gray92'))  +
+    ylab('Magnitude [m]')
+  
+  if(length(components) == 1) {
+    temp_p <- temp_p + scale_color_manual(values = c('dodgerblue'))
+  } else {
+    temp_p <- temp_p + facet_grid(rows = vars(comp))
+  }
   temp_p
 }
 
-save_plot <- function(plot_obj, filename, size = c(10,6)) {
+save_plot <- function(plot_obj, filename, size = c(11,6)) {
   ggsave(filename, 
          plot = plot_obj,
          device = 'png', 

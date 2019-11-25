@@ -43,7 +43,7 @@ p1 <- plot_tides_simple2(tide_df,
                    n_days = 30)
 save_plot(p1,'tide_constituents_30days.png')
 p2 <- plot_tides_simple2(tide_df, components = c('tide'), n_days = 7)
-save_plot(p2,'tide_7day.png')
+save_plot(p2,'tide_7days.png')
 
 # #### Create Equilibrium Amplitude Fucntion 
 # 
@@ -95,7 +95,7 @@ king_hist <- tide_df %>%
   group_by(date_year) %>%
   summarise(num_king_tides = n()) %>%
   ggplot() +
-  geom_bar(aes(x = date_year, y = num_king_tides), stat = 'identity') +
+  geom_bar(aes(x = date_year, y = num_king_tides), stat = 'identity', fill = 'darkblue') +
   my_theme +
   ylab('Days Exceeding Flooding Threshold') +
   xlab('Year')
@@ -117,7 +117,7 @@ tide_wSLR <- plot_tides_simple2(tide_df, components = c('tide_plus_SLR'), n_days
   geom_abline(slope = SLR_RATE, 
               intercept = -SLR_RATE*min(tide_df$date_year), 
               color = 'black')
-# save_plot(tide_wSLR,'tide_wSLR_curr_5year.png')
+save_plot(tide_wSLR,'tide_wSLR_curr_5year.png')
 save_plot(tide_wSLR,'tide_wSLR_12in30_5year.png')
 
 # New histogram -- includes SLR
@@ -134,8 +134,10 @@ SLR_hist <- tide_df %>%
   group_by(date_year) %>%
   summarise(num_king_tides = n()) %>%
   ggplot() +
-  geom_bar(aes(x = date_year, y = num_king_tides), stat = 'identity') +
-  my_theme
+  geom_bar(aes(x = date_year, y = num_king_tides), stat = 'identity', fill = 'darkblue') +
+  my_theme +
+  ylab('Days Exceeding Flooding Threshold') +
+  xlab('Year')
 save_plot(SLR_hist, 'hist_SLR_12in30.png', size = c(6,6))
 
 # Another set of rates:
@@ -162,7 +164,9 @@ SLR_hist <- tide_df %>%
   ggplot() +
   geom_bar(aes(x = date_year, y = num_king_tides), stat = 'identity') +
   geom_hline(aes(yintercept = mean(num_king_tides))) +
-  my_theme
+  my_theme +
+  ylab('Days Exceeding Flooding Threshold') +
+  xlab('Year')
 save_plot(SLR_hist, 'hist_SLR_12in30.png', size = c(6,6))
 
 # Days with High Tide Flooding, based on SLR scenarios:
@@ -197,10 +201,12 @@ SLR_scenarios_line <- tide_df %>%
   summarise(mean_n_king_tide_days = mean(num_king_tides)) %>%
   ggplot() +
   # geom_bar(aes(x = SLR_scenario, y = mean_n_king_tide_days), stat = 'identity') +
-  geom_line(aes(x = SLR_scenario, y = mean_n_king_tide_days)) +
+  geom_line(aes(x = SLR_scenario, y = mean_n_king_tide_days), color = 'darkblue') +
   # facet_grid(cols = vars(SLR_scenario)) +
   # geom_hline(aes(yintercept = mean(num_king_tides))) +
-  my_theme
+  my_theme +
+  ylab('Mean Days Exceeding Flooding Threshold') +
+  xlab('Year')
 save_plot(SLR_scenarios_line, 'SLR_scenarios_line.png', size = c(6,6))
 
 
