@@ -111,14 +111,14 @@ SLR_RATE <- 0.00239 # [m/yr] source: NOAA https://tidesandcurrents.noaa.gov/sltr
 tide_df$MSL <- tide_df$t_years * SLR_RATE
 tide_df$tide_plus_SLR <- tide_df$MSL + tide_df$tide
 
-plot_tides_simple2(tide_df %>% filter(date_year < 2021 | date_year > 2059), components = c('MSL'), n_days = N_DAYS)
-tide_wSLR <- plot_tides_simple2(tide_df, components = c('tide_plus_SLR'), n_days = 365*25) +
+# plot_tides_simple2(tide_df %>% filter(date_year < 2021 | date_year > 2059), components = c('MSL'), n_days = N_DAYS)
+tide_wSLR <- plot_tides_simple2(tide_df, components = c('tide_plus_SLR'), n_days = N_DAYS) +
   geom_hline(yintercept = king_tide_threshold, color = 'black', linetype = 'dashed') +
   geom_abline(slope = SLR_RATE, 
               intercept = -SLR_RATE*min(tide_df$date_year), 
               color = 'black')
-save_plot(tide_wSLR,'tide_wSLR_curr_5year.png')
-save_plot(tide_wSLR,'tide_wSLR_12in30_5year.png')
+save_plot(tide_wSLR,'tide_wSLR_curr.png')
+save_plot(tide_wSLR,'tide_wSLR_12in30.png')
 
 # New histogram -- includes SLR
 SLR_hist <- tide_df %>%
@@ -138,6 +138,7 @@ SLR_hist <- tide_df %>%
   my_theme +
   ylab('Days Exceeding Flooding Threshold') +
   xlab('Year')
+save_plot(SLR_hist, 'hist_SLR_curr.png', size = c(6,6))
 save_plot(SLR_hist, 'hist_SLR_12in30.png', size = c(6,6))
 
 # Another set of rates:
