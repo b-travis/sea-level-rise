@@ -93,7 +93,7 @@ king_hist <- tide_df %>%
   ungroup() %>%
   filter(daily_max >= king_tide_threshold) %>%
   group_by(date_year) %>%
-  summarise(num_king_tides = n()) %>%
+  summarise(num_king_tides = n()) #%>%
   ggplot() +
   geom_bar(aes(x = date_year, y = num_king_tides), stat = 'identity', fill = 'darkblue') +
   my_theme +
@@ -151,7 +151,7 @@ SLR_RATE <- 0.02032 # [m/yr] --> equivalent to 24 inches in 30 years
 m_per_in <- 0.0254
 
 SLR_hist <- tide_df %>%
-  mutate(tide = tide + 9*m_per_in) %>%
+  mutate(tide = tide + 6*m_per_in) %>%
   select(c(t_days, t_years, date_year, tide)) %>%
   mutate(t_days = ceiling(t_days),
          t_years = ceiling(t_years),
@@ -199,7 +199,7 @@ SLR_scenarios_line <- tide_df %>%
   summarise(num_king_tides = n()) %>%
   ungroup() %>%
   group_by(SLR_scenario) %>%
-  summarise(mean_n_king_tide_days = mean(num_king_tides)) %>%
+  summarise(mean_n_king_tide_days = mean(num_king_tides)) #%>%
   ggplot() +
   # geom_bar(aes(x = SLR_scenario, y = mean_n_king_tide_days), stat = 'identity') +
   geom_line(aes(x = SLR_scenario, y = mean_n_king_tide_days), color = 'darkblue') +
@@ -207,7 +207,7 @@ SLR_scenarios_line <- tide_df %>%
   # geom_hline(aes(yintercept = mean(num_king_tides))) +
   my_theme +
   ylab('Mean Days Exceeding Flooding Threshold') +
-  xlab('Year')
+  xlab('Inches above Current Mean Sea Level')
 save_plot(SLR_scenarios_line, 'SLR_scenarios_line.png', size = c(6,6))
 
 
